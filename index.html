@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fff8f1">
+  <title>Little List — Daily Task Manager</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #403b45;
+      --muted: #8d8792;
+      --pink: #e895a8;
+      --pink-dark: #bf637d;
+      --paper: #fffdfb;
+      --line: #f0e8e5;
+      --lavender: #eee9f8;
+      --mint: #e6f2ec;
+    }
+    * { box-sizing: border-box; }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 36px 18px;
+      display: grid;
+      place-items: center;
+      color: var(--ink);
+      background: radial-gradient(ellipse at 15% 12%, #fce5e9 0, transparent 32%),
+                  radial-gradient(ellipse at 90% 85%, #e9e5f5 0, transparent 34%), #fff8f1;
+      font-family: ui-rounded, "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+    .card {
+      width: min(100%, 480px);
+      padding: 34px clamp(22px, 6vw, 42px) 26px;
+      background: var(--paper);
+      border: 1px solid rgba(255,255,255,.9);
+      border-radius: 26px;
+      box-shadow: 0 18px 55px rgba(91, 65, 76, .12);
+    }
+    .eyebrow { margin: 0 0 8px; color: var(--pink-dark); font-size: .76rem; font-weight: 750; letter-spacing: .14em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(2rem, 8vw, 2.6rem); line-height: 1.1; letter-spacing: -.045em; }
+    .subtitle { margin: 11px 0 25px; color: var(--muted); font-size: .96rem; }
+    form { display: flex; gap: 9px; margin-bottom: 23px; }
+    input {
+      min-width: 0; flex: 1; padding: 13px 15px; color: var(--ink);
+      background: #fff; border: 1px solid var(--line); border-radius: 13px;
+      font: inherit; outline: none; transition: border-color .18s, box-shadow .18s;
+    }
+    input::placeholder { color: #b2acb4; }
+    input:focus { border-color: var(--pink); box-shadow: 0 0 0 3px #fbeaf0; }
+    button { font: inherit; cursor: pointer; }
+    .add-button {
+      padding: 0 18px; color: white; background: var(--pink-dark); border: 0;
+      border-radius: 13px; font-weight: 700; transition: transform .15s, background .15s;
+    }
+    .add-button:hover { background: #a94f6a; transform: translateY(-1px); }
+    .add-button:active { transform: translateY(0); }
+    .list-heading { display: flex; align-items: center; justify-content: space-between; margin: 0 2px 10px; }
+    h2 { margin: 0; font-size: .9rem; font-weight: 750; }
+    #count { color: var(--muted); font-size: .8rem; }
+    ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+    .task {
+      display: flex; align-items: center; gap: 11px; min-height: 54px; padding: 9px 10px 9px 13px;
+      background: #fff; border: 1px solid var(--line); border-radius: 14px;
+      transition: background .18s, border-color .18s;
+    }
+    .task:hover { border-color: #ead7dd; }
+    .check {
+      flex: 0 0 21px; width: 21px; height: 21px; padding: 0; display: grid; place-items: center;
+      color: white; background: white; border: 1.5px solid #d8cfd4; border-radius: 50%;
+    }
+    .task.done .check { background: #8eb9a1; border-color: #8eb9a1; }
+    .task.done .check::after { content: "✓"; font-size: 13px; font-weight: 800; }
+    .task-text { flex: 1; overflow-wrap: anywhere; font-size: .95rem; line-height: 1.4; cursor: pointer; }
+    .task.done .task-text { color: #aaa3ab; text-decoration: line-through; text-decoration-color: #b6aeb6; }
+    .delete {
+      width: 32px; height: 32px; padding: 0; color: #aaa1a8; background: transparent;
+      border: 0; border-radius: 9px; font-size: 1.15rem; line-height: 1;
+    }
+    .delete:hover { color: #b44d65; background: #fff0f2; }
+    .empty { padding: 25px 12px; color: var(--muted); text-align: center; font-size: .9rem; }
+    .empty span { display: block; margin-bottom: 7px; font-size: 1.7rem; }
+    footer { margin-top: 22px; color: #aaa3ab; text-align: center; font-size: .76rem; }
+    button:focus-visible, .task-text:focus-visible { outline: 3px solid #edb5c3; outline-offset: 2px; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media (max-width: 420px) { body { padding: 18px 12px; } .card { padding-top: 27px; padding-bottom: 22px; } .add-button { padding-inline: 14px; } }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <p class="eyebrow">A little space for today</p>
+    <h1>Little List <span aria-hidden="true">✿</span></h1>
+    <p class="subtitle">Small steps make a lovely day.</p>
+
+    <form id="task-form">
+      <label class="sr-only" for="task-input">New task</label>
+      <input id="task-input" name="task" type="text" maxlength="180" placeholder="What would you like to do?" autocomplete="off" required>
+      <button class="add-button" type="submit">Add <span aria-hidden="true">＋</span></button>
+    </form>
+
+    <section aria-labelledby="tasks-title">
+      <div class="list-heading"><h2 id="tasks-title">Today’s tasks</h2><span id="count" aria-live="polite"></span></div>
+      <ul id="task-list"></ul>
+      <div id="empty" class="empty"><span aria-hidden="true">☁️</span>Your list is clear. Add a little task to begin.</div>
+    </section>
+    <footer>One thing at a time ♡</footer>
+  </main>
+  <script>
+    (() => {
+      const storageKey = 'little-list-tasks-v1';
+      const form = document.querySelector('#task-form');
+      const input = document.querySelector('#task-input');
+      const list = document.querySelector('#task-list');
+      const empty = document.querySelector('#empty');
+      const count = document.querySelector('#count');
+      let tasks = [];
+      try {
+        const saved = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        if (Array.isArray(saved)) tasks = saved.filter(t => t && typeof t.id === 'string' && typeof t.text === 'string' && typeof t.done === 'boolean');
+      } catch { tasks = []; }
+
+      function save() { localStorage.setItem(storageKey, JSON.stringify(tasks)); }
+      function render() {
+        list.replaceChildren();
+        empty.hidden = tasks.length > 0;
+        const remaining = tasks.filter(task => !task.done).length;
+        count.textContent = tasks.length ? `${remaining} left · ${tasks.length} total` : '0 tasks';
+        for (const task of tasks) {
+          const row = document.createElement('li');
+          row.className = `task${task.done ? ' done' : ''}`;
+          const check = document.createElement('button');
+          check.type = 'button'; check.className = 'check';
+          check.setAttribute('aria-label', `${task.done ? 'Mark' : 'Complete'} “${task.text}”`);
+          check.setAttribute('aria-pressed', String(task.done));
+          check.addEventListener('click', () => toggle(task.id));
+          const text = document.createElement('span');
+          text.className = 'task-text'; text.textContent = task.text; text.tabIndex = 0;
+          text.setAttribute('role', 'button');
+          text.setAttribute('aria-label', `${task.done ? 'Uncheck' : 'Complete'} ${task.text}`);
+          text.addEventListener('click', () => toggle(task.id));
+          text.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggle(task.id); } });
+          const del = document.createElement('button');
+          del.type = 'button'; del.className = 'delete'; del.textContent = '×';
+          del.setAttribute('aria-label', `Delete ${task.text}`);
+          del.addEventListener('click', () => { tasks = tasks.filter(item => item.id !== task.id); save(); render(); });
+          row.append(check, text, del); list.append(row);
+        }
+      }
+      function toggle(id) { tasks = tasks.map(task => task.id === id ? { ...task, done: !task.done } : task); save(); render(); }
+      form.addEventListener('submit', event => {
+        event.preventDefault();
+        const text = input.value.trim();
+        if (!text) { input.focus(); return; }
+        tasks.push({ id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`, text, done: false });
+        save(); render(); form.reset(); input.focus();
+      });
+      render();
+    })();
+  </script>
+</body>
+</html>
